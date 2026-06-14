@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow Services — Premium Digital Marketplace</title>
+    <!-- Added Favicon Here -->
+    <link rel="icon" type="image/png" href="https://cdn.discordapp.com/attachments/1496252965755949177/1515681382817464382/bot.png?ex=6a2fe3c9&is=6a2e9249&hm=5d5beae677f1ebb80b344a8bdabbc0e91097414a2de8b8eaa961c929bdc746f3">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'blue-primary': '#2563eb',
+                        'blue-hover': '#1d4ed8',
+                        'bg-main': '#050505',
+                        'bg-card': '#0a0a0a'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        shimmer: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(100%)' },
+                        }
+                    },
+                    animation: {
+                        float: 'float 6s ease-in-out infinite',
+                        shimmer: 'shimmer 2.5s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-main: #050505;
+            --bg-card: #0a0a0a;
+            --blue-primary: #2563eb;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            margin: 0;
+        }
+
+        /* Subtle Background Grid */
+        .bg-grid {
+            background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Marquee Animation */
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            display: flex;
+            width: max-content;
+            animation: marquee 40s linear infinite;
+        }
+        .animate-marquee:hover {
+            animation-play-state: paused;
+        }
+
+        /* FAQ Accordion Hide Default Arrow */
+        summary::-webkit-details-marker {
+            display: none;
+        }
+        summary {
+            list-style: none;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: var(--blue-primary); border-radius: 10px; }
+
+        /* Loader */
+        #site-loader {
+            position: fixed; inset: 0; z-index: 9999;
+            background: var(--bg-main);
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.6s ease;
+        }
+        .spinner-ring {
+            width: 40px; height: 40px;
+            border: 3px solid rgba(37,99,235,0.2);
+            border-top-color: var(--blue-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Product Loading State */
+        .products-loading, .products-error, .products-empty {
+            grid-column: 1 / -1;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 60px 0; gap: 16px; color: rgba(255,255,255,0.4);
+        }
+    </style>
+</head>
+<body class="bg-bg-main text-white relative antialiased">
+
+    <!-- Loader -->
+    <div id="site-loader">
+        <div class="flex flex-col items-center gap-4">
+            <div class="spinner-ring"></div>
+            <span class="text-xs font-bold uppercase tracking-widest text-blue-500">Loading</span>
+        </div>
+    </div>
+
+    <!-- Background Elements -->
+    <div class="fixed inset-0 bg-grid z-0 opacity-30 pointer-events-none"></div>
+    <div class="fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(37,99,235,0.08)_0%,transparent_50%)] z-0 pointer-events-none"></div>
+
+    <!-- Navbar -->
+    <nav id="main-nav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-bg-main/80 backdrop-blur-md border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="/" class="flex items-center gap-3 group z-20">
+                <div class="w-10 h-10 bg-blue-primary/10 rounded-xl flex items-center justify-center border border-blue-primary/20 group-hover:bg-blue-primary/20 transition-colors p-1.5">
+                    <img src="https://cdn.discordapp.com/attachments/1496252965755949177/1515681382817464382/bot.png?ex=6a2fe3c9&is=6a2e9249&hm=5d5beae677f1ebb80b344a8bdabbc0e91097414a2de8b8eaa961c929bdc746f3" alt="Shadow Services Logo" class="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(37,99,235,0.6)]">
+                </div>
+                <span class="text-xl font-bold tracking-tight">Shadow Services</span>
+            </a>
+
+            <!-- Desktop Links -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#home" class="text-sm font-medium text-white/70 hover:text-white transition-colors">Home</a>
+                <a href="#products" class="text-sm font-medium text-white/70 hover:text-white transition-colors">Products</a>
+                <a href="#reviews" class="text-sm font-medium text-white/70 hover:text-white transition-colors">Reviews</a>
+                <a href="#faq" class="text-sm font-medium text-white/70 hover:text-white transition-colors">FAQ</a>
+            </div>
+
+            <!-- Discord Button -->
+            <div class="hidden md:flex z-20">
+                <a href="https://discord.gg/shadow" target="_blank" class="flex items-center gap-2 px-5 py-2.5 bg-[#5865F2]/10 text-[#5865F2] hover:bg-[#5865F2] hover:text-white rounded-full text-sm font-semibold transition-all">
+                    <i data-lucide="message-square" class="w-4 h-4"></i> Discord
+                </a>
+            </div>
+
+            <!-- Mobile Menu Toggle -->
+            <button id="menu-toggle" class="md:hidden p-2 text-white/70 hover:text-white z-20">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden absolute top-20 left-0 w-full bg-bg-card border-b border-white/5 py-4 px-6 flex flex-col gap-4 shadow-2xl z-40">
+            <a href="#home" class="text-sm font-medium text-white/70 hover:text-white">Home</a>
+            <a href="#products" class="text-sm font-medium text-white/70 hover:text-white">Products</a>
+            <a href="#reviews" class="text-sm font-medium text-white/70 hover:text-white">Reviews</a>
+            <a href="#faq" class="text-sm font-medium text-white/70 hover:text-white">FAQ</a>
+            <a href="https://discord.gg/shadow" class="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#5865F2] text-white rounded-full text-sm font-semibold w-full mt-2">
+                <i data-lucide="message-square" class="w-4 h-4"></i> Discord
+            </a>
+        </div>
+    </nav>
+
+    <!-- 1. Hero Section (Padding reduced to shift everything up) -->
+    <section id="home" class="relative pt-28 pb-16 lg:pt-36 lg:pb-24 overflow-hidden z-10">
+        <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            
+            <!-- Hero Left -->
+            <div>
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight mb-6 leading-[1.1] text-white">
+                    Premium Digital<br>Marketplace
+                </h1>
+                
+                <div class="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm font-medium text-gray-300 mb-6">
+                    <div class="flex items-center text-yellow-500">
+                        <i data-lucide="star" class="w-3 h-3 sm:w-4 sm:h-4 fill-current"></i>
+                        <i data-lucide="star" class="w-3 h-3 sm:w-4 sm:h-4 fill-current"></i>
+                        <i data-lucide="star" class="w-3 h-3 sm:w-4 sm:h-4 fill-current"></i>
+                        <i data-lucide="star" class="w-3 h-3 sm:w-4 sm:h-4 fill-current"></i>
+                        <i data-lucide="star" class="w-3 h-3 sm:w-4 sm:h-4 fill-current"></i>
+                        <span class="text-white ml-2">5.0</span>
+                    </div>
+                    <span class="text-white/20">|</span>
+                    <span id="stat-clients">1000+ Happy Customers</span>
+                    <span class="text-white/20">|</span>
+                    <span>10K+ Products Sold</span>
+                </div>
+                
+                <p class="text-gray-400 text-base sm:text-lg mb-8 max-w-lg leading-relaxed">
+                    Elevate your experience with Shadow Services. We provide high-end, instantly delivered digital goods tailored for professionals and creators.
+                </p>
+                
+                <ul class="space-y-4 mb-10 text-sm text-gray-400">
+                    <li class="flex items-start gap-3">
+                        <div class="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 shrink-0"></div>
+                        <div><strong class="text-white font-semibold">Zero-Wait Delivery</strong> Assets arrive the millisecond payment confirms</div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 shrink-0"></div>
+                        <div><strong class="text-white font-semibold">Encrypted Checkout</strong> Enterprise-grade security on every transaction</div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 shrink-0"></div>
+                        <div><strong class="text-white font-semibold">Dedicated Warranty</strong> Guaranteed replacements on eligible products</div>
+                    </li>
+                </ul>
+                
+                <a href="#products" class="inline-flex items-center justify-center gap-2 w-full sm:w-auto bg-blue-primary hover:bg-blue-hover text-white font-semibold py-3.5 px-8 rounded-full transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)]">
+                    <i data-lucide="zap" class="w-4 h-4"></i> Buy Now →
+                </a>
+            </div>
+
+            <!-- Hero Right (Interactive Animated Card) -->
+            <div class="relative w-full max-w-[280px] sm:max-w-sm lg:max-w-lg mx-auto lg:ml-auto flex items-center justify-center py-10 lg:p-8 mt-6 lg:mt-0">
+                <div class="absolute inset-0 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
+                
+                <!-- Continuous Floating Container -->
+                <div class="group relative w-full aspect-square animate-float cursor-pointer">
+                    
+                    <!-- Tilted Card (Springs Straight on Hover) -->
+                    <div class="absolute inset-0 bg-white/5 border border-white/10 rounded-2xl sm:rounded-[2rem] backdrop-blur-xl flex items-center justify-center shadow-[0_0_50px_rgba(0,0,0,0.3)] transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform -rotate-6 group-hover:rotate-0 group-hover:bg-white/10 group-hover:shadow-[0_0_60px_rgba(37,99,235,0.2)]">
+                        
+                        <!-- Floating Tags positioned directly on the borders -->
+                        
+                        <!-- Automated (Top Left Border) -->
+                        <div class="absolute -top-4 -left-4 sm:-top-5 sm:-left-8 w-max bg-bg-card border border-white/10 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-semibold flex items-center gap-2 z-10 shadow-2xl transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:-translate-y-2 group-hover:-translate-x-2">
+                            <i data-lucide="zap" class="w-3 h-3 sm:w-4 sm:h-4 text-blue-400"></i> Automated
+                        </div>
+                        
+                        <!-- Encrypted (Middle Right Border) -->
+                        <div class="absolute top-1/2 -right-6 sm:-right-12 -translate-y-1/2 w-max bg-bg-card border border-white/10 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-semibold flex items-center gap-2 z-10 shadow-2xl transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:translate-x-3">
+                            <i data-lucide="shield" class="w-3 h-3 sm:w-4 sm:h-4 text-green-400"></i> Encrypted
+                        </div>
+                        
+                        <!-- Verified (Bottom Left Border) -->
+                        <div class="absolute -bottom-4 left-4 sm:-bottom-5 sm:left-8 w-max bg-bg-card border border-white/10 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-semibold flex items-center gap-2 z-10 shadow-2xl transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:translate-y-2 group-hover:-translate-x-1">
+                            <i data-lucide="star" class="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400"></i> Verified
+                        </div>
+                        
+                        <!-- Provided Logo Image (Pops up slightly on hover) -->
+                        <img src="https://cdn.discordapp.com/attachments/1496252965755949177/1515681382817464382/bot.png?ex=6a2fe3c9&is=6a2e9249&hm=5d5beae677f1ebb80b344a8bdabbc0e91097414a2de8b8eaa961c929bdc746f3" alt="Shadow Services Logo" class="w-[65%] h-[65%] object-contain filter drop-shadow-[0_0_40px_rgba(37,99,235,0.5)] transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110 group-hover:drop-shadow-[0_0_60px_rgba(37,99,235,0.7)]">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 2. Why Choose Us Section -->
+    <section class="py-24 bg-bg-card/50 border-y border-white/5 relative z-10 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+            
+            <!-- Left Side -->
+            <div>
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-primary/10 text-blue-400 rounded-full text-xs font-semibold mb-6">
+                    <i data-lucide="award" class="w-4 h-4"></i> What We Offer
+                </div>
+                <h2 class="text-4xl font-bold mb-6 text-white">Why Choose Us</h2>
+                <p class="text-gray-400 leading-relaxed mb-10">
+                    We provide only the highest quality digital products, delivered instantly to your inbox the moment your payment is confirmed. No waiting, no hassle — just premium goods at your fingertips.
+                </p>
+                
+                <div class="space-y-8">
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                            <i data-lucide="zap" class="w-5 h-5 text-blue-500"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-white mb-1">Instant Delivery</h4>
+                            <p class="text-sm text-gray-400 leading-relaxed">Your product is delivered to your inbox the second payment is confirmed. No delays, no waiting.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                            <i data-lucide="star" class="w-5 h-5 text-blue-500"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-white mb-1">Premium Quality Products</h4>
+                            <p class="text-sm text-gray-400 leading-relaxed">Every item we sell is hand-verified and guaranteed to work. No low-quality or recycled stock — ever.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                            <i data-lucide="headphones" class="w-5 h-5 text-blue-500"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-white mb-1">24/7 Support</h4>
+                            <p class="text-sm text-gray-400 leading-relaxed">Our support team is always available. Got an issue? We'll resolve it fast, day or night.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                            <i data-lucide="credit-card" class="w-5 h-5 text-blue-500"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-white mb-1">Multiple Payment Options</h4>
+                            <p class="text-sm text-gray-400 leading-relaxed">Pay your way — Crypto (Bitcoin, Ethereum, Litecoin) and more. Fast, secure and hassle-free checkout.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side (Simulated Phone Mockup - Animated) -->
+            <div class="relative w-full max-w-[280px] sm:max-w-sm mx-auto lg:mx-0 lg:ml-auto mt-12 lg:mt-0 flex items-center justify-center py-10">
+                <!-- Glow -->
+                <div class="absolute inset-0 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
+                
+                <!-- Floating Container -->
+                <div class="group relative w-full animate-float cursor-pointer">
+                    
+                    <!-- Tilted Phone Card (Springs Straight on Hover) -->
+                    <div class="relative bg-bg-main border-[6px] sm:border-[8px] border-[#1a1a1a] rounded-[2.5rem] h-[500px] sm:h-[580px] w-full overflow-visible shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform rotate-6 group-hover:rotate-0 group-hover:shadow-[0_0_60px_rgba(37,99,235,0.2)]">
+                        
+                        <!-- Notch -->
+                        <div class="absolute top-0 inset-x-0 h-6 bg-[#1a1a1a] rounded-b-2xl w-24 sm:w-32 mx-auto z-30"></div>
+                        
+                        <!-- Screen Content -->
+                        <div class="absolute inset-0 rounded-[2rem] overflow-hidden bg-gradient-to-b from-blue-900/20 to-bg-main flex flex-col items-center pt-16 px-6">
+                            <div class="w-16 h-16 bg-blue-primary/10 border border-blue-primary/20 rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(37,99,235,0.2)]">
+                                <i data-lucide="zap" class="w-8 h-8 text-blue-500"></i>
+                            </div>
+                            <h4 class="text-center font-bold text-lg sm:text-xl mb-6 text-white">Welcome to<br><span class="text-blue-500">Shadow Services</span></h4>
+                            
+                            <!-- Faux App Content -->
+                            <div class="w-full text-center space-y-4">
+                                <div class="text-[10px] sm:text-xs text-gray-400 font-medium px-2 leading-relaxed">
+                                    Providing high-end, instantly delivered digital goods tailored for professionals.
+                                </div>
+                                <div class="h-px w-1/2 bg-white/10 mx-auto my-4"></div>
+                                <div class="space-y-3 opacity-30 px-4">
+                                    <div class="h-8 w-full bg-white/10 rounded-xl"></div>
+                                    <div class="h-16 w-full bg-white/10 rounded-xl"></div>
+                                    <div class="h-8 w-full bg-white/10 rounded-xl"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Floating Tags positioned directly on the borders -->
+                        
+                        <!-- Trusted Service (Top Right Border) -->
+                        <div class="absolute top-16 -right-4 sm:-right-12 w-max max-w-[200px] bg-bg-card border border-white/10 p-2.5 sm:p-4 rounded-2xl flex items-center gap-3 shadow-2xl z-40 transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:-translate-y-2 group-hover:translate-x-2">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
+                                <i data-lucide="star" class="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 fill-blue-400"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs sm:text-sm font-bold text-white">Trusted Service</div>
+                                <div class="text-[10px] sm:text-xs text-gray-400">5-Star Rated</div>
+                            </div>
+                        </div>
+
+                        <!-- Growth Achieved (Middle Left Border) - MOVED DOWN to top-[65%] -->
+                        <div class="absolute top-[65%] -left-4 sm:-left-16 -translate-y-1/2 w-max max-w-[200px] bg-bg-card border border-white/10 p-2.5 sm:p-4 rounded-2xl flex items-center gap-3 shadow-2xl z-40 transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:-translate-x-3">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
+                                <i data-lucide="trending-up" class="w-4 h-4 sm:w-5 sm:h-5 text-purple-400"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs sm:text-sm font-bold text-white">Growth Achieved</div>
+                                <div class="text-[10px] sm:text-xs text-gray-400">Level 3 Boosted</div>
+                            </div>
+                        </div>
+
+                        <!-- Rapid Growth (Bottom Right Border) -->
+                        <div class="absolute bottom-10 sm:bottom-20 -right-4 sm:-right-10 w-max max-w-[200px] bg-bg-card border border-white/10 p-2.5 sm:p-4 rounded-2xl flex items-center gap-3 shadow-2xl z-40 transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:translate-y-2 group-hover:translate-x-2">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                                <i data-lucide="zap" class="w-4 h-4 sm:w-5 sm:h-5 text-green-400 fill-green-400"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs sm:text-sm font-bold text-white">Rapid Growth</div>
+                                <div class="text-[10px] sm:text-xs text-gray-400">+2,500 Today</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 3. Products Section -->
+    <section id="products" class="py-24 relative z-10">
+        <div class="max-w-7xl mx-auto px-6">
+            
+            <div class="flex flex-col items-center text-center mb-12">
+                <h2 class="text-4xl font-bold mb-4 capitalize text-white" id="current-category-title">Products</h2>
+                <p class="text-gray-400 mb-4">Select duration and number of assets for your needs</p>
+                <div class="flex items-center justify-center gap-2 text-xs text-gray-500">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-blue-500"></i> Live stock — updated real-time
+                </div>
+            </div>
+
+            <!-- Dynamic Category Tabs -->
+            <div id="product-tabs" class="flex flex-wrap items-center justify-center gap-3 mb-12">
+                <!-- Generated by JS -->
+            </div>
+
+            <!-- Products Grid -->
+            <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Loading State -->
+                <div class="products-loading">
+                    <div class="spinner-ring"></div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 4. How It Works Section -->
+    <section class="py-24 bg-bg-card/50 border-y border-white/5 relative z-10">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs font-semibold mb-6 text-gray-300">
+                    <i data-lucide="list" class="w-4 h-4 text-blue-500"></i> Seamless process
+                </div>
+                <h2 class="text-4xl font-bold text-white">How to Order</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative max-w-5xl mx-auto">
+                <!-- Glowing Connecting Line for Desktop -->
+                <div class="hidden md:block absolute top-8 left-[16%] right-[16%] h-[2px] bg-white/5 rounded-full overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500 to-transparent w-full -translate-x-full animate-shimmer"></div>
+                </div>
+
+                <!-- Step 1 -->
+                <div class="relative z-10 flex flex-col items-center text-center group cursor-default">
+                    <div class="relative w-16 h-16 rounded-full bg-bg-main border-2 border-blue-500/50 flex items-center justify-center text-xl font-bold mb-6 text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-transform duration-500 group-hover:scale-110 group-hover:border-blue-400">
+                        <div class="absolute inset-0 rounded-full bg-blue-500/20 blur-md animate-pulse"></div>
+                        <span class="relative z-10">1</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white">Browse Collection</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed max-w-xs">Find the perfect digital assets tailored specifically to your needs.</p>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="relative z-10 flex flex-col items-center text-center group cursor-default">
+                    <div class="relative w-16 h-16 rounded-full bg-bg-main border-2 border-blue-500/50 flex items-center justify-center text-xl font-bold mb-6 text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-transform duration-500 group-hover:scale-110 group-hover:border-blue-400" style="animation-delay: 0.2s">
+                        <div class="absolute inset-0 rounded-full bg-blue-500/20 blur-md animate-pulse" style="animation-delay: 0.2s"></div>
+                        <span class="relative z-10">2</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white">Secure Payment</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed max-w-xs">Complete your purchase safely using our encrypted payment gateways.</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="relative z-10 flex flex-col items-center text-center group cursor-default">
+                    <div class="relative w-16 h-16 rounded-full bg-bg-main border-2 border-blue-500/50 flex items-center justify-center text-xl font-bold mb-6 text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-transform duration-500 group-hover:scale-110 group-hover:border-blue-400" style="animation-delay: 0.4s">
+                        <div class="absolute inset-0 rounded-full bg-blue-500/20 blur-md animate-pulse" style="animation-delay: 0.4s"></div>
+                        <span class="relative z-10">3</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white">Instant Access</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed max-w-xs">Receive your digital products directly in your inbox with zero delay.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. FAQ Section -->
+    <section id="faq" class="py-24 relative z-10">
+        <div class="max-w-3xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs font-semibold mb-6 text-gray-300">
+                    <i data-lucide="help-circle" class="w-4 h-4 text-blue-500"></i> Need help?
+                </div>
+                <h2 class="text-4xl font-bold text-white">Frequently Asked Questions</h2>
+            </div>
+
+            <div class="space-y-4">
+                <!-- FAQ 1 -->
+                <details class="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden transition-all hover:bg-white/10">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer p-6 text-base text-white">
+                        <span>How long does delivery take?</span>
+                        <span class="transition-transform group-open:rotate-180 text-gray-500">
+                            <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                        </span>
+                    </summary>
+                    <div class="text-gray-400 px-6 pb-6 pt-0 text-sm leading-relaxed">
+                        Delivery is completely automated and instant. The moment your payment is confirmed, your digital assets are emailed to you immediately.
+                    </div>
+                </details>
+                <!-- FAQ 2 -->
+                <details class="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden transition-all hover:bg-white/10">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer p-6 text-base text-white">
+                        <span>Are the products fully verified?</span>
+                        <span class="transition-transform group-open:rotate-180 text-gray-500">
+                            <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                        </span>
+                    </summary>
+                    <div class="text-gray-400 px-6 pb-6 pt-0 text-sm leading-relaxed">
+                        Yes. Every product we sell is hand-verified and guaranteed to work. No recycled or low-quality stock — ever.
+                    </div>
+                </details>
+                <!-- FAQ 3 -->
+                <details class="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden transition-all hover:bg-white/10">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer p-6 text-base text-white">
+                        <span>What payment methods do you accept?</span>
+                        <span class="transition-transform group-open:rotate-180 text-gray-500">
+                            <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                        </span>
+                    </summary>
+                    <div class="text-gray-400 px-6 pb-6 pt-0 text-sm leading-relaxed">
+                        We accept Crypto (Bitcoin, Ethereum, Litecoin) and more through our secure payment processors.
+                    </div>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. Reviews Section -->
+    <section id="reviews" class="py-24 bg-bg-card/50 border-y border-white/5 overflow-hidden relative z-10">
+        <div class="max-w-7xl mx-auto px-6 text-center mb-16">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs font-semibold mb-6 text-gray-300">
+                <i data-lucide="star" class="w-4 h-4 text-blue-500"></i> What they say
+            </div>
+            <h2 class="text-4xl font-bold text-white">Customer Reviews</h2>
+        </div>
+
+        <div class="flex overflow-hidden">
+            <div class="animate-marquee flex gap-6 px-3 whitespace-normal">
+                
+                <!-- Review Cards -->
+                <div class="bg-[#0f0f0f] border border-white/10 p-6 rounded-2xl w-[320px] shrink-0 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center text-yellow-500 mb-4">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                        <p class="text-gray-300 text-sm italic mb-6">"Got my server boosts in under a minute. The automation is absolutely flawless."</p>
+                    </div>
+                    <p class="text-gray-500 text-xs font-semibold">- @Jinx_Pro</p>
+                </div>
+
+                <div class="bg-[#0f0f0f] border border-white/10 p-6 rounded-2xl w-[320px] shrink-0 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center text-yellow-500 mb-4">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                        <p class="text-gray-300 text-sm italic mb-6">"Support team answered my ticket immediately at 3 AM. Highly recommended."</p>
+                    </div>
+                    <p class="text-gray-500 text-xs font-semibold">- Marcus T.</p>
+                </div>
+
+                <div class="bg-[#0f0f0f] border border-white/10 p-6 rounded-2xl w-[320px] shrink-0 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center text-yellow-500 mb-4">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                        <p class="text-gray-300 text-sm italic mb-6">"Cheapest rates I could find, and the keys are 100% legit."</p>
+                    </div>
+                    <p class="text-gray-500 text-xs font-semibold">- ElevateGaming</p>
+                </div>
+
+                <div class="bg-[#0f0f0f] border border-white/10 p-6 rounded-2xl w-[320px] shrink-0 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center text-yellow-500 mb-4">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                        <p class="text-gray-300 text-sm italic mb-6">"Smooth transaction, no issues at all. A+"</p>
+                    </div>
+                    <p class="text-gray-500 text-xs font-semibold">- cryptoninja</p>
+                </div>
+
+                <div class="bg-[#0f0f0f] border border-white/10 p-6 rounded-2xl w-[320px] shrink-0 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center text-yellow-500 mb-4">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                        <p class="text-gray-300 text-sm italic mb-6">"10/10 service, will definitely buy again."</p>
+                    </div>
+                    <p class="text-gray-500 text-xs font-semibold">- bxnny</p>
+                </div>
+
+                <div class="bg-[#0f0f0f] border border-white/10 p-6 rounded-2xl w-[320px] shrink-0 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center text-yellow-500 mb-4">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                        <p class="text-gray-300 text-sm italic mb-6">"First time buying here and I'm impressed. Everything worked perfectly right out of the box."</p>
+                    </div>
+                    <p class="text-gray-500 text-xs font-semibold">- David R.</p>
+                </div>
+                
+                <!-- Duplicate for infinite effect -->
+                <div class="bg-[#0f0f0f] border border-white/10 p-6 rounded-2xl w-[320px] shrink-0 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center text-yellow-500 mb-4">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                        <p class="text-gray-300 text-sm italic mb-6">"Got my server boosts in under a minute. The automation is absolutely flawless."</p>
+                    </div>
+                    <p class="text-gray-500 text-xs font-semibold">- @Jinx_Pro</p>
+                </div>
+
+                <div class="bg-[#0f0f0f] border border-white/10 p-6 rounded-2xl w-[320px] shrink-0 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center text-yellow-500 mb-4">
+                            <i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                        </div>
+                        <p class="text-gray-300 text-sm italic mb-6">"Support team answered my ticket immediately at 3 AM. Highly recommended."</p>
+                    </div>
+                    <p class="text-gray-500 text-xs font-semibold">- Marcus T.</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. Footer -->
+    <footer class="pt-16 pb-8 relative z-10 bg-[#030303] border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+                
+                <div class="md:col-span-2">
+                    <a href="/" class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 bg-blue-primary/10 rounded-lg flex items-center justify-center border border-blue-primary/20 p-1">
+                            <img src="https://cdn.discordapp.com/attachments/1496252965755949177/1515681382817464382/bot.png?ex=6a2fe3c9&is=6a2e9249&hm=5d5beae677f1ebb80b344a8bdabbc0e91097414a2de8b8eaa961c929bdc746f3" alt="Shadow Services Logo" class="w-full h-full object-contain">
+                        </div>
+                        <span class="text-lg font-bold tracking-tight text-white">Shadow Services</span>
+                    </a>
+                    <p class="text-gray-500 text-sm leading-relaxed max-w-sm">
+                        Providing the most premium, secure, and fully automated digital assets. Join thousands of satisfied customers today.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-white mb-4">Navigation</h4>
+                    <ul class="space-y-3 text-sm text-gray-500">
+                        <li><a href="#home" class="hover:text-blue-400 transition-colors flex items-center gap-2"><i data-lucide="chevron-right" class="w-3 h-3"></i> Home</a></li>
+                        <li><a href="#products" class="hover:text-blue-400 transition-colors flex items-center gap-2"><i data-lucide="chevron-right" class="w-3 h-3"></i> Products</a></li>
+                        <li><a href="#reviews" class="hover:text-blue-400 transition-colors flex items-center gap-2"><i data-lucide="chevron-right" class="w-3 h-3"></i> Reviews</a></li>
+                        <li><a href="#faq" class="hover:text-blue-400 transition-colors flex items-center gap-2"><i data-lucide="chevron-right" class="w-3 h-3"></i> FAQ</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-white mb-4">Legal</h4>
+                    <ul class="space-y-3 text-sm text-gray-500">
+                        <li><a href="/terms" class="hover:text-blue-400 transition-colors flex items-center gap-2"><i data-lucide="chevron-right" class="w-3 h-3"></i> Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-blue-400 transition-colors flex items-center gap-2"><i data-lucide="chevron-right" class="w-3 h-3"></i> Privacy Policy</a></li>
+                    </ul>
+                    <h4 class="font-bold text-white mt-6 mb-4">Connect</h4>
+                    <a href="https://discord.gg/shadow" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-[#5865F2]/10 text-[#5865F2] hover:bg-[#5865F2] hover:text-white rounded-xl text-sm font-semibold transition-all">
+                        <i data-lucide="message-square" class="w-4 h-4"></i> Discord
+                    </a>
+                </div>
+
+            </div>
+
+            <div class="border-t border-white/5 pt-8 text-center md:text-left text-xs text-gray-600 font-medium">
+                © 2026 Shadow Services. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        lucide.createIcons();
+
+        // Loader removal
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loader = document.getElementById('site-loader');
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 600);
+            }, 800);
+        });
+
+        // Mobile Menu
+        const menuToggle = document.getElementById('menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        menuToggle.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Backend Integration Code
+        let allProducts = [];
+        let activeCategory = null;
+
+        function renderProducts(cat) {
+            const grid = document.getElementById('products-grid');
+            const title = document.getElementById('current-category-title');
+            title.textContent = cat || 'Products';
+            
+            const filtered = allProducts.filter(p => p.category === cat);
+            grid.innerHTML = '';
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="products-empty">
+                        <i data-lucide="box" class="w-10 h-10 text-gray-600 mb-2"></i>
+                        <span class="text-sm font-medium">No products in this category.</span>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            filtered.forEach(p => {
+                const oos = !p.in_stock;
+                const card = document.createElement('div');
+                
+                // Card matching the sleek dark UI
+                card.className = `relative bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 transition-all hover:border-blue-500/40 hover:bg-white/5 flex flex-col ${oos ? 'opacity-60' : ''}`;
+                
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <h3 class="text-lg font-bold text-white">${escapeHtml(p.name)}</h3>
+                    </div>
+                    
+                    <div class="bg-black/50 rounded-xl aspect-video mb-6 flex items-center justify-center border border-white/5 relative overflow-hidden group">
+                        ${p.image ? 
+                            `<img src="${p.image}" class="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500">` : 
+                            `<i data-lucide="box" class="w-12 h-12 text-blue-500/30"></i>`
+                        }
+                        ${oos ? `
+                            <div class="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                                <span class="bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Out of Stock</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="mt-auto flex justify-between items-end">
+                        <div>
+                            <div class="text-2xl font-bold text-white">$${parseFloat(p.price).toFixed(2)}</div>
+                            <div class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                <i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i> ${oos ? 'Check back soon' : 'Instant delivery'}
+                            </div>
+                        </div>
+                        <button 
+                            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${oos ? 'bg-white/5 text-gray-500 cursor-not-allowed' : 'bg-blue-primary hover:bg-blue-hover text-white shadow-lg shadow-blue-primary/20'}"
+                            ${oos ? 'disabled' : ''}
+                            onclick="${oos ? '' : `window.location.href='/product/${p.slug}'`}"
+                        >
+                            Purchase
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        function buildTabs(categories) {
+            const tabsEl = document.getElementById('product-tabs');
+            tabsEl.innerHTML = '';
+
+            categories.forEach((cat, idx) => {
+                const btn = document.createElement('button');
+                const isActive = idx === 0;
+                btn.className = `product-tab px-6 py-2 rounded-full text-sm font-semibold transition-all ${
+                    isActive 
+                        ? 'bg-white/10 text-white border border-white/20' 
+                        : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                }`;
+                btn.textContent = cat;
+                
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.product-tab').forEach(t => {
+                        t.classList.remove('bg-white/10', 'text-white', 'border-white/20');
+                        t.classList.add('bg-transparent', 'text-gray-400', 'border-transparent');
+                    });
+                    btn.classList.remove('bg-transparent', 'text-gray-400', 'border-transparent');
+                    btn.classList.add('bg-white/10', 'text-white', 'border-white/20');
+                    activeCategory = cat;
+                    renderProducts(cat);
+                });
+                tabsEl.appendChild(btn);
+            });
+        }
+
+        async function loadProducts() {
+            const grid = document.getElementById('products-grid');
+            try {
+                const res = await fetch('/api/products');
+                if (!res.ok) throw new Error();
+                allProducts = await res.json();
+
+                const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
+                if (cats.length === 0) {
+                    grid.innerHTML = `<div class="products-empty"><span class="text-sm font-medium text-gray-500">No products available currently.</span></div>`;
+                    return;
+                }
+
+                buildTabs(cats);
+                activeCategory = cats[0];
+                renderProducts(cats[0]);
+
+            } catch (err) {
+                grid.innerHTML = `
+                    <div class="products-error">
+                        <i data-lucide="alert-circle" class="w-10 h-10 text-red-500 mb-2"></i>
+                        <span class="text-sm font-medium text-red-400">Failed to load products.</span>
+                        <button onclick="loadProducts()" class="mt-4 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-semibold transition-colors">Retry</button>
+                    </div>`;
+                lucide.createIcons();
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/admin/stats');
+                if (!res.ok) return;
+                const data = await res.json();
+                const el = document.getElementById('stat-clients');
+                if (el && data.paid_invoices) {
+                    el.textContent = `${data.paid_invoices.toLocaleString()}+ Happy Customers`;
+                }
+            } catch (e) {
+                // Ignore stats load error
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+        }
+
+        // Initialize
+        loadProducts();
+        loadStats();
+    </script>
+</body>
+</html>
